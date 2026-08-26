@@ -1,7 +1,7 @@
 import os, sqlite3, secrets
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, redirect, url_for, session, render_template_string, jsonify, abort
+from flask import Flask, request, redirect, url_for, session, render_template_string, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -20,9 +20,9 @@ def init_db():
     CREATE TABLE IF NOT EXISTS vouchers(id INTEGER PRIMARY KEY, code TEXT UNIQUE, package_id INTEGER, used_by INTEGER, created_at TEXT, used_at TEXT);
     CREATE TABLE IF NOT EXISTS sessions(id INTEGER PRIMARY KEY, customer_id INTEGER, package_id INTEGER, device_mac TEXT, started_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1);
     ''')
-    email=os.getenv('NETFI_ADMIN_EMAIL','admin@netfi.local'); password=os.getenv('NETFI_ADMIN_PASSWORD','ChangeMe123!')
-    if not cur.execute('SELECT 1 FROM admins WHERE email=?',(email,)).fetchone():
-        cur.execute('INSERT INTO admins(email,password,created_at) VALUES(?,?,?)',(email,generate_password_hash(password),datetime.utcnow().isoformat()))
+    username=os.getenv('NETFI_ADMIN_USERNAME','admin1'); password=os.getenv('NETFI_ADMIN_PASSWORD','iLOVESOMEONE.2')
+    if not cur.execute('SELECT 1 FROM admins WHERE email=?',(username,)).fetchone():
+        cur.execute('INSERT INTO admins(email,password,created_at) VALUES(?,?,?)',(username,generate_password_hash(password),datetime.utcnow().isoformat()))
     c.commit(); c.close()
 init_db()
 
@@ -39,10 +39,10 @@ def page(body): return render_template_string(BASE,body=body)
 @app.route('/login',methods=['GET','POST'])
 def login():
  if request.method=='POST':
-  row=db().execute('SELECT * FROM admins WHERE email=?',(request.form['email'],)).fetchone()
+  row=db().execute('SELECT * FROM admins WHERE email=?',(request.form['username'],)).fetchone()
   if row and check_password_hash(row['password'],request.form['password']): session['admin']=row['email']; return redirect('/')
   return 'Invalid login',401
- return '''<h2>Netfi Billing System</h2><form method=post><input name=email placeholder=Email required><input name=password type=password placeholder=Password required><button>Login</button></form>'''
+ return '''<h2>Netfi Billing System</h2><form method=post><input name=username placeholder=Username required><input name=password type=password placeholder=Password required><button>Login</button></form>'''
 @app.route('/logout')
 def logout(): session.clear(); return redirect('/login')
 @app.route('/')
